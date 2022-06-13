@@ -47,6 +47,8 @@ function woocommerce_paysky_creditcard_wc_init()
             $this->msg['message'] = "";
             $this->msg['class'] = "";
 
+            add_action('wp_head', 'wpb_load_crypto_hmac_sha256_javascript');
+
             add_action('wp_head', 'wpb_hook_javascript');
 
             if ($this->live == "yes") {
@@ -58,7 +60,7 @@ function woocommerce_paysky_creditcard_wc_init()
             }
 
             if (isset($_GET['lightbox'])) {
-                excuse_hook_javascript($_SESSION['paysky_amount'], $this->terminal_id, $this->merchant_id, $_SESSION['paysky_ref_number']);
+                excuse_hook_javascript($_SESSION['paysky_amount'], $this->terminal_id, $this->merchant_id, $_SESSION['paysky_ref_number'], $this->hexToStr($this->secret_key));
             }
 
             if (isset($_GET['ordercomplete'])) {
@@ -997,29 +999,38 @@ function woocommerce_paysky_creditcard_wc_init()
     }
 
 
-    function excuse_hook_javascript($amount, $terminalId, $merchantId, $refNumber)
+    function excuse_hook_javascript($amount, $terminalId, $merchantId, $refNumber, $secretKey)
     {
 
         echo '  <script type="text/javascript">
             console.log("excuse_hook_javascript");
-            var amount =  ' . $amount . ';
+            var amount =  ' . $amount * 1000 . ';
             var terminalId = ' . $terminalId . ';
             var merchantId = ' . $merchantId . ';
             var refNumber =  "' . $refNumber . '";
+            var secretKey =  "' . $secretKey . '";
+
         setTimeout(function(){
-          callLightbox(
-                amount,
-            merchantId    , terminalId , refNumber
-            )
-            ;
+          callLightbox(amount, merchantId , terminalId , refNumber ,secretKey);
              }, 2000);
         </script>';
     }
 
+    /**
+     * load crypto hmac libs to use them in generate secure has
+     */
+    function wpb_load_crypto_hmac_sha256_javascript()
+    {
+?>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/hmac-sha256.min.js"></script>
+
+    <?php
+    }
 
     function wpb_load_test_server_javascript()
     {
-?>
+    ?>
         <script type="text/javascript">
             loadScript('https://tnpg.moamalat.net:6006/js/lightbox.js');
         </script>
@@ -1075,22 +1086,29 @@ function woocommerce_paysky_creditcard_wc_init()
                 head.appendChild(script);
             }
  
-            function callLightbox(amount, mID, tID, merchantReference) {
+            function genereateSecureHash(amount, dateTimeLocalTrxn, mID, tID, merchantReference, key) {
+                var msg = 'Amount='+amount+'&DateTimeLocalTrxn='+dateTimeLocalTrxn+'&MerchantId='+mID+'&MerchantReference='+merchantReference+'&TerminalId='+tID;
+                console.log(msg);
+                var hash = CryptoJS.HmacSHA256(msg, key).toString().toUpperCase();
+                console.log({'hash' : hash});
+                return hash;
+            }
+            
+            function callLightbox(amount, mID, tID, merchantReference, key) {
 
-                var orderId = null;
                 var dateResponse = null;
-                var paymentMethodFromLightBox = null;
+                var dateTimeLocalTrxn = Number.parseInt(Date.now() / 1000).toString();
                 if (mID === '' || tID === '') {
                     return;
                 }
 
-                Lightbox.Checkout.configure = {
-                    OrderId: orderId,
-                    paymentMethodFromLightBox: paymentMethodFromLightBox,
+                Lightbox.Checkout.configure = { 
                     MID: mID,
                     TID: tID,
-                    AmountTrxn: amount * 100,
+                    AmountTrxn: amount,
                     MerchantReference: merchantReference,
+                    TrxDateTime: dateTimeLocalTrxn,
+                    SecureHash: genereateSecureHash(amount, dateTimeLocalTrxn, mID, tID, merchantReference, key),
                     completeCallback: function (data) {
                         dateResponse = data;
 
