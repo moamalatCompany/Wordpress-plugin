@@ -1,4 +1,5 @@
 <?php
+
 /******************************************************************************************************************************
  *
  *     Plugin Name: Moamalat Gateway - PayForm
@@ -17,16 +18,16 @@ function woocommerce_paysky_creditcard_wc_init()
 {
     if (!class_exists('WC_Payment_Gateway')) return;
 
-//extend wc_payment_gateway class and create ad class
+    //extend wc_payment_gateway class and create ad class
     class WC_Gateway_paysky_creditcard_wc extends WC_Payment_Gateway
     {
 
 
         public function __construct()
         {
-           
+
             $this->id = 'paysky';
-            $this->icon = apply_filters('woocommerce_paysky_icon',  plugins_url( 'icons/moamalat.png' , __FILE__ ));
+            $this->icon = apply_filters('woocommerce_paysky_icon',  plugins_url('icons/moamalat.png', __FILE__));
             $this->medthod_title = 'Moamalat Payment Gateway - PayForm';
             $this->method_description = 'Take payments using credit cards, debit cards powered by Moamalat Payment gateway';
             $this->has_fields = false;
@@ -55,12 +56,12 @@ function woocommerce_paysky_creditcard_wc_init()
                 $this->liveurl = "https://tnpg.moamalat.net/Cube/PayLink.svc/api/FilterTransactions";
                 add_action('wp_head', 'wpb_load_test_server_javascript');
             }
-       
+
             if (isset($_GET['lightbox'])) {
                 excuse_hook_javascript($_SESSION['paysky_amount'], $this->terminal_id, $this->merchant_id, $_SESSION['paysky_ref_number']);
             }
 
-            if ( isset($_GET['ordercomplete'])) {
+            if (isset($_GET['ordercomplete'])) {
                 $this->complete_transaction();
             }
 
@@ -79,19 +80,22 @@ function woocommerce_paysky_creditcard_wc_init()
                     'title' => __('Enable/Disable', 'paysky'),
                     'type' => 'checkbox',
                     'label' => __('Enable Moamalat PayForm Gateway', 'paysky'),
-                    'default' => 'no'),
+                    'default' => 'no'
+                ),
                 'live' => array(
                     'title' => __('Live/Test', 'paysky'),
                     'type' => 'checkbox',
                     'label' => __('Enable Live Moamalat PayForm Gateway', 'paysky'),
-                    'default' => 'no'),
+                    'default' => 'no'
+                ),
                 'merchant_id' => array(
                     'title' => __('Merchant id', 'paysky'),
                     'type' => 'text',
                     'value' => '',
                     'description' => __('Please enter the merchant ID ', 'woocommerce'),
                     'default' => '',
-                    'required' => true),
+                    'required' => true
+                ),
 
                 'terminal_id' => array(
                     'title' => __('Terminal id', 'paysky'),
@@ -100,7 +104,8 @@ function woocommerce_paysky_creditcard_wc_init()
                     'description' => __('Please enter Terminal ID of your Moamalat merchant', 'woocommerce'),
                     'default' => '',
                     'size' => '15',
-                    'required' => true),
+                    'required' => true
+                ),
                 'secret_key' => array(
                     'title' => __('Secret key', 'paysky'),
                     'type' => 'text',
@@ -108,12 +113,14 @@ function woocommerce_paysky_creditcard_wc_init()
                     'description' => __('Please enter  Secret key', 'woocommerce'),
                     'default' => '',
                     'size' => '50',
-                    'required' => true),
-                    'complete_paid_order' => array(
-                        'title' => __('Complete order after payment', 'paysky'),
-                        'type' => 'checkbox',
-                        'label' => __('set order status completed after payment instead of processing', 'paysky'),
-                        'default' => 'no'),
+                    'required' => true
+                ),
+                'complete_paid_order' => array(
+                    'title' => __('Complete order after payment', 'paysky'),
+                    'type' => 'checkbox',
+                    'label' => __('set order status completed after payment instead of processing', 'paysky'),
+                    'default' => 'no'
+                ),
 
             );
         }
@@ -160,7 +167,6 @@ function woocommerce_paysky_creditcard_wc_init()
             // Generate the HTML For the settings form.
             $this->generate_settings_html();
             echo '</table>';
-
         }
 
 
@@ -251,7 +257,7 @@ function woocommerce_paysky_creditcard_wc_init()
                 $paysky_args['postal_code'] = substr($order->get_billing_phone(), 0, 5);
                 $paysky_args['postal_code_shipping'] = substr($order->get_billing_phone(), 0, 5);
             }
-            
+
             // Cart Contents
             $item_loop = 0;
             $total_product_value = 0;
@@ -305,7 +311,7 @@ function woocommerce_paysky_creditcard_wc_init()
             $paysky_args["DeliveryType"] = $order->get_shipping_method();
             $paysky_args["CustomerId"] = get_current_user_id();
             $paysky_args["channelOfOperations"] = "channelOfOperations";
- 
+
             $paysky_args = apply_filters('woocommerce_paysky_args', $paysky_args);
             $pay_url = $this->before_process($paysky_args);
 
@@ -347,7 +353,6 @@ function woocommerce_paysky_creditcard_wc_init()
             $response_data = $this->sendRequest($this->liveurl, $request_string);
             $object = json_decode($response_data);
             return $object;
-
         }
 
 
@@ -416,7 +421,6 @@ function woocommerce_paysky_creditcard_wc_init()
             $minutes = date('i', $date);
             $seconds = date('s', $date);
             return $year . $month . $day . $hour . $minutes . $seconds . '';
-
         }
 
 
@@ -431,7 +435,6 @@ function woocommerce_paysky_creditcard_wc_init()
             $month = date('m', $date);
             $year = date('Y', $date);
             return $year . $month . $day . '';
-
         }
 
 
@@ -494,7 +497,7 @@ function woocommerce_paysky_creditcard_wc_init()
                 $done = true;
                 //if get response successfull
                 if ($object->TotalCountAllTransaction > 0) {
-                    $paidAmount = doubleval($_SESSION['paysky_amount'])*1000;
+                    $paidAmount = doubleval($_SESSION['paysky_amount']) * 1000;
                     $isPaymentApproved = false;
                     $transactions = $object->Transactions;
                     $orderRefNumber = $_SESSION['paysky_ref_number'];
@@ -503,7 +506,7 @@ function woocommerce_paysky_creditcard_wc_init()
                         foreach ($dateTransactions as $dateTransaction) {
                             if ($dateTransaction->MerchantReference ==  $orderRefNumber) {
                                 $serverAmount = doubleval($dateTransaction->AmountTrxn);
-                                if ($dateTransaction->Status == 'Approved' && ($paidAmount==$serverAmount)) {
+                                if ($dateTransaction->Status == 'Approved' && ($paidAmount == $serverAmount)) {
                                     $isPaymentApproved = true;
                                     break;
                                 } else {
@@ -512,27 +515,26 @@ function woocommerce_paysky_creditcard_wc_init()
                                 }
                             }
                         }
-
                     }
 
                     if ($isPaymentApproved) {
-                     
+
                         $this->msg['class'] = 'woocommerce_message';
-                        $payRef = "Payment Reference Number ". $_SESSION['paysky_ref_number'];
+                        $payRef = "Payment Reference Number " . $_SESSION['paysky_ref_number'];
                         $order->payment_complete($payRef);
                         $order->reduce_order_stock();
                         $woocommerce->cart->empty_cart();
 
-                        if($this->complete_paid_order=='yes'){
-                            $order->update_status( 'completed' );
-                        }else{
-                            $order->update_status( 'processing' );
+                        if ($this->complete_paid_order == 'yes') {
+                            $order->update_status('completed');
+                        } else {
+                            $order->update_status('processing');
                         }
-                        
-                         // clear session.
-                         unset($_SESSION['paysky_order_id']);
-                         unset($_SESSION['paysky_amount']);
-                         unset($_SESSION['paysky_ref_number']);
+
+                        // clear session.
+                        unset($_SESSION['paysky_order_id']);
+                        unset($_SESSION['paysky_amount']);
+                        unset($_SESSION['paysky_ref_number']);
 
                         wc_add_notice('' . __('Thank you for shopping with us. Your account has been charged and your transaction is successful.
             We will be shipping your order to you soon.', 'woocommerce'), 'success');
@@ -549,8 +551,6 @@ function woocommerce_paysky_creditcard_wc_init()
                         wp_redirect($this->get_cancel_order_url($order->get_id()));
                         exit;
                     }
-
-
                 } else {
 
                     // Change the status to pending / unpaid
@@ -562,171 +562,170 @@ function woocommerce_paysky_creditcard_wc_init()
                     wp_redirect($this->get_cancel_order_url($order->get_id()));
                     exit;
                 }
-
-            } 
+            }
         }
 
 
         function getccPhone($code)
         {
             $countries = array(
-                "AF" => '+93',//array("AFGHANISTAN", "AF", "AFG", "004"),
-                "AL" => '+355',//array("ALBANIA", "AL", "ALB", "008"),
-                "DZ" => '+213',//array("ALGERIA", "DZ", "DZA", "012"),
-                "AS" => '+376',//array("AMERICAN SAMOA", "AS", "ASM", "016"),
-                "AD" => '+376',//array("ANDORRA", "AD", "AND", "020"),
-                "AO" => '+244',//array("ANGOLA", "AO", "AGO", "024"),
-                "AG" => '+1-268',//array("ANTIGUA AND BARBUDA", "AG", "ATG", "028"),
-                "AR" => '+54',//array("ARGENTINA", "AR", "ARG", "032"),
-                "AM" => '+374',//array("ARMENIA", "AM", "ARM", "051"),
-                "AU" => '+61',//array("AUSTRALIA", "AU", "AUS", "036"),
-                "AT" => '+43',//array("AUSTRIA", "AT", "AUT", "040"),
-                "AZ" => '+994',//array("AZERBAIJAN", "AZ", "AZE", "031"),
-                "BS" => '+1-242',//array("BAHAMAS", "BS", "BHS", "044"),
-                "BH" => '+973',//array("BAHRAIN", "BH", "BHR", "048"),
-                "BD" => '+880',//array("BANGLADESH", "BD", "BGD", "050"),
-                "BB" => '1-246',//array("BARBADOS", "BB", "BRB", "052"),
-                "BY" => '+375',//array("BELARUS", "BY", "BLR", "112"),
-                "BE" => '+32',//array("BELGIUM", "BE", "BEL", "056"),
-                "BZ" => '+501',//array("BELIZE", "BZ", "BLZ", "084"),
-                "BJ" => '+229',// array("BENIN", "BJ", "BEN", "204"),
-                "BT" => '+975',//array("BHUTAN", "BT", "BTN", "064"),
-                "BO" => '+591',//array("BOLIVIA", "BO", "BOL", "068"),
-                "BA" => '+387',//array("BOSNIA AND HERZEGOVINA", "BA", "BIH", "070"),
-                "BW" => '+267',//array("BOTSWANA", "BW", "BWA", "072"),
-                "BR" => '+55',//array("BRAZIL", "BR", "BRA", "076"),
-                "BN" => '+673',//array("BRUNEI DARUSSALAM", "BN", "BRN", "096"),
-                "BG" => '+359',//array("BULGARIA", "BG", "BGR", "100"),
-                "BF" => '+226',//array("BURKINA FASO", "BF", "BFA", "854"),
-                "BI" => '+257',//array("BURUNDI", "BI", "BDI", "108"),
-                "KH" => '+855',//array("CAMBODIA", "KH", "KHM", "116"),
-                "CA" => '+1',//array("CANADA", "CA", "CAN", "124"),
-                "CV" => '+238',//array("CAPE VERDE", "CV", "CPV", "132"),
-                "CF" => '+236',//array("CENTRAL AFRICAN REPUBLIC", "CF", "CAF", "140"),
-                "CM" => '+237',//array("CENTRAL AFRICAN REPUBLIC", "CF", "CAF", "140"),
-                "TD" => '+235',//array("CHAD", "TD", "TCD", "148"),
-                "CL" => '+56',//array("CHILE", "CL", "CHL", "152"),
-                "CN" => '+86',//array("CHINA", "CN", "CHN", "156"),
-                "CO" => '+57',//array("COLOMBIA", "CO", "COL", "170"),
-                "KM" => '+269',//array("COMOROS", "KM", "COM", "174"),
-                "CG" => '+242',//array("CONGO", "CG", "COG", "178"),
-                "CR" => '+506',//array("COSTA RICA", "CR", "CRI", "188"),
-                "CI" => '+225',//array("COTE D'IVOIRE", "CI", "CIV", "384"),
-                "HR" => '+385',//array("CROATIA (local name: Hrvatska)", "HR", "HRV", "191"),
-                "CU" => '+53',//array("CUBA", "CU", "CUB", "192"),
-                "CY" => '+357',//array("CYPRUS", "CY", "CYP", "196"),
-                "CZ" => '+420',//array("CZECH REPUBLIC", "CZ", "CZE", "203"),
-                "DK" => '+45',//array("DENMARK", "DK", "DNK", "208"),
-                "DJ" => '+253',//array("DJIBOUTI", "DJ", "DJI", "262"),
-                "DM" => '+1-767',//array("DOMINICA", "DM", "DMA", "212"),
-                "DO" => '+1-809',//array("DOMINICAN REPUBLIC", "DO", "DOM", "214"),
-                "EC" => '+593',//array("ECUADOR", "EC", "ECU", "218"),
-                "EG" => '+20',//array("EGYPT", "EG", "EGY", "818"),
-                "SV" => '+503',//array("EL SALVADOR", "SV", "SLV", "222"),
-                "GQ" => '+240',//array("EQUATORIAL GUINEA", "GQ", "GNQ", "226"),
-                "RS" => '+381',//array("SERBIA", "RS", "SRB", "688"),
-                "ME" => '+382',//array("MONTENERGO","ME","MNE","382"),
-                "CD" => '+243',//array("CONGO", "CD", "COD", "243"),
-                "TF" => '+262',//array("FRENCH SOUTHERN TERRITORIES", "TF", "ATF", "260"),
-                "VG" => '+1',//array("VIRGIN ISLANDS (BRITISH)", "VG", "VGB", "92"),
-                "ER" => '+291',//array("ERITREA", "ER", "ERI", "232"),
-                "EE" => '+372',//array("ESTONIA", "EE", "EST", "233"),
-                "ET" => '+251',//array("ETHIOPIA", "ET", "ETH", "210"),
-                "FJ" => '+679',//array("FIJI", "FJ", "FJI", "242"),
-                "FI" => '+358',//array("FINLAND", "FI", "FIN", "246"),
-                "FR" => '+33',//array("FRANCE", "FR", "FRA", "250"),
-                "GA" => '+241',//array("GABON", "GA", "GAB", "266"),
-                "GM" => '+220',//array("GAMBIA", "GM", "GMB", "270"),
-                "GE" => '+995',//array("GEORGIA", "GE", "GEO", "268"),
-                "DE" => '+49',//array("GERMANY", "DE", "DEU", "276"),
-                "GH" => '+233',//array("GHANA", "GH", "GHA", "288"),
-                "GR" => '+30',//array("GREECE", "GR", "GRC", "300"),
-                "GD" => '+1-473',//array("GRENADA", "GD", "GRD", "308"),
-                "GT" => '+502',//array("GUATEMALA", "GT", "GTM", "320"),
-                "GN" => '+224',//array("GUINEA", "GN", "GIN", "324"),
-                "GW" => '+245',//array("GUINEA-BISSAU", "GW", "GNB", "624"),
-                "GY" => '+592',//array("GUYANA", "GY", "GUY", "328"),
-                "HT" => '+509',//array("HAITI", "HT", "HTI", "332"),
-                "HN" => '+504',//array("HONDURAS", "HN", "HND", "340"),
-                "HK" => '+852',//array("HONG KONG", "HK", "HKG", "344"),
-                "HU" => '+36',//array("HUNGARY", "HU", "HUN", "348"),
-                "IS" => '+354',//array("ICELAND", "IS", "ISL", "352"),
-                "IN" => '+91',//array("INDIA", "IN", "IND", "356"),
-                "ID" => '+62',//array("INDONESIA", "ID", "IDN", "360"),
-                "IR" => '+98',//array("IRAN, ISLAMIC REPUBLIC OF", "IR", "IRN", "364"),
-                "IQ" => '+964',//array("IRAQ", "IQ", "IRQ", "368"),
-                "IE" => '+353',//array("IRELAND", "IE", "IRL", "372"),
-                "IL" => '+972',//array("ISRAEL", "IL", "ISR", "376"),
-                "IT" => '+39',//array("ITALY", "IT", "ITA", "380"),
-                "JM" => '+1-876',//array("JAMAICA", "JM", "JAM", "388"),
-                "JP" => '+81',//array("JAPAN", "JP", "JPN", "392"),
-                "JO" => '+962',//array("JORDAN", "JO", "JOR", "400"),
-                "KZ" => '+7',//array("KAZAKHSTAN", "KZ", "KAZ", "398"),
-                "KE" => '+254',//array("KENYA", "KE", "KEN", "404"),
-                "KI" => '+686',//array("KIRIBATI", "KI", "KIR", "296"),
-                "KP" => '+850',//array("KOREA, DEMOCRATIC PEOPLE'S REPUBLIC OF", "KP", "PRK", "408"),
-                "KR" => '+82',//array("KOREA, REPUBLIC OF", "KR", "KOR", "410"),
-                "KW" => '+965',//array("KUWAIT", "KW", "KWT", "414"),
-                "KG" => '+996',//array("KYRGYZSTAN", "KG", "KGZ", "417"),
-                "LA" => '+856',//array("LAO PEOPLE'S DEMOCRATIC REPUBLIC", "LA", "LAO", "418"),
-                "LV" => '+371',//array("LATVIA", "LV", "LVA", "428"),
-                "LB" => '+961',//array("LEBANON", "LB", "LBN", "422"),
-                "LS" => '+266',//array("LESOTHO", "LS", "LSO", "426"),
-                "LR" => '+231',//array("LIBERIA", "LR", "LBR", "430"),
-                "MO" => '+231',//array("LIBERIA", "LR", "LBR", "430"),
-                "LY" => '+218',//array("LIBYAN ARAB JAMAHIRIYA", "LY", "LBY", "434"),
-                "LI" => '+423',//array("LIECHTENSTEIN", "LI", "LIE", "438"),
-                "LU" => '+352',//array("LUXEMBOURG", "LU", "LUX", "442"),
-                "MO" => '+389',//array("MACAU", "MO", "MAC", "446"),
-                "MG" => '+261',//array("MADAGASCAR", "MG", "MDG", "450"),
-                "MW" => '+265',//array("MALAWI", "MW", "MWI", "454"),
-                "MY" => '+60',//array("MALAYSIA", "MY", "MYS", "458"),
-                "MX" => '+52',//array("MEXICO", "MX", "MEX", "484"),
-                "MC" => '+377',//array("MONACO", "MC", "MCO", "492"),
-                "MA" => '+212',//array("MOROCCO", "MA", "MAR", "504")
-                "NP" => '+977',//array("NEPAL", "NP", "NPL", "524"),
-                "NL" => '+31',//array("NETHERLANDS", "NL", "NLD", "528"),
-                "NZ" => '+64',//array("NEW ZEALAND", "NZ", "NZL", "554"),
-                "NI" => '+505',//array("NICARAGUA", "NI", "NIC", "558"),
-                "NE" => '+227',//array("NIGER", "NE", "NER", "562"),
-                "NG" => '+234',//array("NIGERIA", "NG", "NGA", "566"),
-                "NO" => '+47',//array("NORWAY", "NO", "NOR", "578"),
-                "OM" => '+968',//array("OMAN", "OM", "OMN", "512"),
-                "PK" => '+92',//array("PAKISTAN", "PK", "PAK", "586"),
-                "PA" => '+507',//array("PANAMA", "PA", "PAN", "591"),
-                "PG" => '+675',//array("PAPUA NEW GUINEA", "PG", "PNG", "598"),
-                "PY" => '+595',// array("PARAGUAY", "PY", "PRY", "600"),
-                "PE" => '+51',// array("PERU", "PE", "PER", "604"),
-                "PH" => '+63',// array("PHILIPPINES", "PH", "PHL", "608"),
-                "PL" => '48',//array("POLAND", "PL", "POL", "616"),
-                "PT" => '+351',//array("PORTUGAL", "PT", "PRT", "620"),
-                "QA" => '+974',//array("QATAR", "QA", "QAT", "634"),
-                "RU" => '+7',//array("RUSSIAN FEDERATION", "RU", "RUS", "643"),
-                "RW" => '+250',//array("RWANDA", "RW", "RWA", "646"),
-                "SA" => '+966',//array("SAUDI ARABIA", "SA", "SAU", "682"),
-                "SN" => '+221',//array("SENEGAL", "SN", "SEN", "686"),
-                "SG" => '+65',//array("SINGAPORE", "SG", "SGP", "702"),
-                "SK" => '+421',//array("SLOVAKIA (Slovak Republic)", "SK", "SVK", "703"),
-                "SI" => '+386',//array("SLOVENIA", "SI", "SVN", "705"),
-                "ZA" => '+27',//array("SOUTH AFRICA", "ZA", "ZAF", "710"),
-                "ES" => '+34',//array("SPAIN", "ES", "ESP", "724"),
-                "LK" => '+94',//array("SRI LANKA", "LK", "LKA", "144"),
-                "SD" => '+249',//array("SUDAN", "SD", "SDN", "736"),
-                "SZ" => '+268',//array("SWAZILAND", "SZ", "SWZ", "748"),
-                "SE" => '+46',//array("SWEDEN", "SE", "SWE", "752"),
-                "CH" => '+41',//array("SWITZERLAND", "CH", "CHE", "756"),
-                "SY" => '+963',//array("SYRIAN ARAB REPUBLIC", "SY", "SYR", "760"),
-                "TZ" => '+255',//array("TANZANIA, UNITED REPUBLIC OF", "TZ", "TZA", "834"),
-                "TH" => '+66',//array("THAILAND", "TH", "THA", "764"),
-                "TG" => '+228',//array("TOGO", "TG", "TGO", "768"),
-                "TO" => '+676',//array("TONGA", "TO", "TON", "776"),
-                "TN" => '+216',//array("TUNISIA", "TN", "TUN", "788"),
-                "TR" => '+90',//array("TURKEY", "TR", "TUR", "792"),
-                "TM" => '+993',//array("TURKMENISTAN", "TM", "TKM", "795"),
-                "UA" => '+380',//array("UKRAINE", "UA", "UKR", "804"),
-                "AE" => '+971',//array("UNITED ARAB EMIRATES", "AE", "ARE", "784"),
-                "GB" => '+44',//array("UNITED KINGDOM", "GB", "GBR", "826"),
-                "US" => '+1'//array("UNITED STATES", "US", "USA", "840"),
+                "AF" => '+93', //array("AFGHANISTAN", "AF", "AFG", "004"),
+                "AL" => '+355', //array("ALBANIA", "AL", "ALB", "008"),
+                "DZ" => '+213', //array("ALGERIA", "DZ", "DZA", "012"),
+                "AS" => '+376', //array("AMERICAN SAMOA", "AS", "ASM", "016"),
+                "AD" => '+376', //array("ANDORRA", "AD", "AND", "020"),
+                "AO" => '+244', //array("ANGOLA", "AO", "AGO", "024"),
+                "AG" => '+1-268', //array("ANTIGUA AND BARBUDA", "AG", "ATG", "028"),
+                "AR" => '+54', //array("ARGENTINA", "AR", "ARG", "032"),
+                "AM" => '+374', //array("ARMENIA", "AM", "ARM", "051"),
+                "AU" => '+61', //array("AUSTRALIA", "AU", "AUS", "036"),
+                "AT" => '+43', //array("AUSTRIA", "AT", "AUT", "040"),
+                "AZ" => '+994', //array("AZERBAIJAN", "AZ", "AZE", "031"),
+                "BS" => '+1-242', //array("BAHAMAS", "BS", "BHS", "044"),
+                "BH" => '+973', //array("BAHRAIN", "BH", "BHR", "048"),
+                "BD" => '+880', //array("BANGLADESH", "BD", "BGD", "050"),
+                "BB" => '1-246', //array("BARBADOS", "BB", "BRB", "052"),
+                "BY" => '+375', //array("BELARUS", "BY", "BLR", "112"),
+                "BE" => '+32', //array("BELGIUM", "BE", "BEL", "056"),
+                "BZ" => '+501', //array("BELIZE", "BZ", "BLZ", "084"),
+                "BJ" => '+229', // array("BENIN", "BJ", "BEN", "204"),
+                "BT" => '+975', //array("BHUTAN", "BT", "BTN", "064"),
+                "BO" => '+591', //array("BOLIVIA", "BO", "BOL", "068"),
+                "BA" => '+387', //array("BOSNIA AND HERZEGOVINA", "BA", "BIH", "070"),
+                "BW" => '+267', //array("BOTSWANA", "BW", "BWA", "072"),
+                "BR" => '+55', //array("BRAZIL", "BR", "BRA", "076"),
+                "BN" => '+673', //array("BRUNEI DARUSSALAM", "BN", "BRN", "096"),
+                "BG" => '+359', //array("BULGARIA", "BG", "BGR", "100"),
+                "BF" => '+226', //array("BURKINA FASO", "BF", "BFA", "854"),
+                "BI" => '+257', //array("BURUNDI", "BI", "BDI", "108"),
+                "KH" => '+855', //array("CAMBODIA", "KH", "KHM", "116"),
+                "CA" => '+1', //array("CANADA", "CA", "CAN", "124"),
+                "CV" => '+238', //array("CAPE VERDE", "CV", "CPV", "132"),
+                "CF" => '+236', //array("CENTRAL AFRICAN REPUBLIC", "CF", "CAF", "140"),
+                "CM" => '+237', //array("CENTRAL AFRICAN REPUBLIC", "CF", "CAF", "140"),
+                "TD" => '+235', //array("CHAD", "TD", "TCD", "148"),
+                "CL" => '+56', //array("CHILE", "CL", "CHL", "152"),
+                "CN" => '+86', //array("CHINA", "CN", "CHN", "156"),
+                "CO" => '+57', //array("COLOMBIA", "CO", "COL", "170"),
+                "KM" => '+269', //array("COMOROS", "KM", "COM", "174"),
+                "CG" => '+242', //array("CONGO", "CG", "COG", "178"),
+                "CR" => '+506', //array("COSTA RICA", "CR", "CRI", "188"),
+                "CI" => '+225', //array("COTE D'IVOIRE", "CI", "CIV", "384"),
+                "HR" => '+385', //array("CROATIA (local name: Hrvatska)", "HR", "HRV", "191"),
+                "CU" => '+53', //array("CUBA", "CU", "CUB", "192"),
+                "CY" => '+357', //array("CYPRUS", "CY", "CYP", "196"),
+                "CZ" => '+420', //array("CZECH REPUBLIC", "CZ", "CZE", "203"),
+                "DK" => '+45', //array("DENMARK", "DK", "DNK", "208"),
+                "DJ" => '+253', //array("DJIBOUTI", "DJ", "DJI", "262"),
+                "DM" => '+1-767', //array("DOMINICA", "DM", "DMA", "212"),
+                "DO" => '+1-809', //array("DOMINICAN REPUBLIC", "DO", "DOM", "214"),
+                "EC" => '+593', //array("ECUADOR", "EC", "ECU", "218"),
+                "EG" => '+20', //array("EGYPT", "EG", "EGY", "818"),
+                "SV" => '+503', //array("EL SALVADOR", "SV", "SLV", "222"),
+                "GQ" => '+240', //array("EQUATORIAL GUINEA", "GQ", "GNQ", "226"),
+                "RS" => '+381', //array("SERBIA", "RS", "SRB", "688"),
+                "ME" => '+382', //array("MONTENERGO","ME","MNE","382"),
+                "CD" => '+243', //array("CONGO", "CD", "COD", "243"),
+                "TF" => '+262', //array("FRENCH SOUTHERN TERRITORIES", "TF", "ATF", "260"),
+                "VG" => '+1', //array("VIRGIN ISLANDS (BRITISH)", "VG", "VGB", "92"),
+                "ER" => '+291', //array("ERITREA", "ER", "ERI", "232"),
+                "EE" => '+372', //array("ESTONIA", "EE", "EST", "233"),
+                "ET" => '+251', //array("ETHIOPIA", "ET", "ETH", "210"),
+                "FJ" => '+679', //array("FIJI", "FJ", "FJI", "242"),
+                "FI" => '+358', //array("FINLAND", "FI", "FIN", "246"),
+                "FR" => '+33', //array("FRANCE", "FR", "FRA", "250"),
+                "GA" => '+241', //array("GABON", "GA", "GAB", "266"),
+                "GM" => '+220', //array("GAMBIA", "GM", "GMB", "270"),
+                "GE" => '+995', //array("GEORGIA", "GE", "GEO", "268"),
+                "DE" => '+49', //array("GERMANY", "DE", "DEU", "276"),
+                "GH" => '+233', //array("GHANA", "GH", "GHA", "288"),
+                "GR" => '+30', //array("GREECE", "GR", "GRC", "300"),
+                "GD" => '+1-473', //array("GRENADA", "GD", "GRD", "308"),
+                "GT" => '+502', //array("GUATEMALA", "GT", "GTM", "320"),
+                "GN" => '+224', //array("GUINEA", "GN", "GIN", "324"),
+                "GW" => '+245', //array("GUINEA-BISSAU", "GW", "GNB", "624"),
+                "GY" => '+592', //array("GUYANA", "GY", "GUY", "328"),
+                "HT" => '+509', //array("HAITI", "HT", "HTI", "332"),
+                "HN" => '+504', //array("HONDURAS", "HN", "HND", "340"),
+                "HK" => '+852', //array("HONG KONG", "HK", "HKG", "344"),
+                "HU" => '+36', //array("HUNGARY", "HU", "HUN", "348"),
+                "IS" => '+354', //array("ICELAND", "IS", "ISL", "352"),
+                "IN" => '+91', //array("INDIA", "IN", "IND", "356"),
+                "ID" => '+62', //array("INDONESIA", "ID", "IDN", "360"),
+                "IR" => '+98', //array("IRAN, ISLAMIC REPUBLIC OF", "IR", "IRN", "364"),
+                "IQ" => '+964', //array("IRAQ", "IQ", "IRQ", "368"),
+                "IE" => '+353', //array("IRELAND", "IE", "IRL", "372"),
+                "IL" => '+972', //array("ISRAEL", "IL", "ISR", "376"),
+                "IT" => '+39', //array("ITALY", "IT", "ITA", "380"),
+                "JM" => '+1-876', //array("JAMAICA", "JM", "JAM", "388"),
+                "JP" => '+81', //array("JAPAN", "JP", "JPN", "392"),
+                "JO" => '+962', //array("JORDAN", "JO", "JOR", "400"),
+                "KZ" => '+7', //array("KAZAKHSTAN", "KZ", "KAZ", "398"),
+                "KE" => '+254', //array("KENYA", "KE", "KEN", "404"),
+                "KI" => '+686', //array("KIRIBATI", "KI", "KIR", "296"),
+                "KP" => '+850', //array("KOREA, DEMOCRATIC PEOPLE'S REPUBLIC OF", "KP", "PRK", "408"),
+                "KR" => '+82', //array("KOREA, REPUBLIC OF", "KR", "KOR", "410"),
+                "KW" => '+965', //array("KUWAIT", "KW", "KWT", "414"),
+                "KG" => '+996', //array("KYRGYZSTAN", "KG", "KGZ", "417"),
+                "LA" => '+856', //array("LAO PEOPLE'S DEMOCRATIC REPUBLIC", "LA", "LAO", "418"),
+                "LV" => '+371', //array("LATVIA", "LV", "LVA", "428"),
+                "LB" => '+961', //array("LEBANON", "LB", "LBN", "422"),
+                "LS" => '+266', //array("LESOTHO", "LS", "LSO", "426"),
+                "LR" => '+231', //array("LIBERIA", "LR", "LBR", "430"),
+                "MO" => '+231', //array("LIBERIA", "LR", "LBR", "430"),
+                "LY" => '+218', //array("LIBYAN ARAB JAMAHIRIYA", "LY", "LBY", "434"),
+                "LI" => '+423', //array("LIECHTENSTEIN", "LI", "LIE", "438"),
+                "LU" => '+352', //array("LUXEMBOURG", "LU", "LUX", "442"),
+                "MO" => '+389', //array("MACAU", "MO", "MAC", "446"),
+                "MG" => '+261', //array("MADAGASCAR", "MG", "MDG", "450"),
+                "MW" => '+265', //array("MALAWI", "MW", "MWI", "454"),
+                "MY" => '+60', //array("MALAYSIA", "MY", "MYS", "458"),
+                "MX" => '+52', //array("MEXICO", "MX", "MEX", "484"),
+                "MC" => '+377', //array("MONACO", "MC", "MCO", "492"),
+                "MA" => '+212', //array("MOROCCO", "MA", "MAR", "504")
+                "NP" => '+977', //array("NEPAL", "NP", "NPL", "524"),
+                "NL" => '+31', //array("NETHERLANDS", "NL", "NLD", "528"),
+                "NZ" => '+64', //array("NEW ZEALAND", "NZ", "NZL", "554"),
+                "NI" => '+505', //array("NICARAGUA", "NI", "NIC", "558"),
+                "NE" => '+227', //array("NIGER", "NE", "NER", "562"),
+                "NG" => '+234', //array("NIGERIA", "NG", "NGA", "566"),
+                "NO" => '+47', //array("NORWAY", "NO", "NOR", "578"),
+                "OM" => '+968', //array("OMAN", "OM", "OMN", "512"),
+                "PK" => '+92', //array("PAKISTAN", "PK", "PAK", "586"),
+                "PA" => '+507', //array("PANAMA", "PA", "PAN", "591"),
+                "PG" => '+675', //array("PAPUA NEW GUINEA", "PG", "PNG", "598"),
+                "PY" => '+595', // array("PARAGUAY", "PY", "PRY", "600"),
+                "PE" => '+51', // array("PERU", "PE", "PER", "604"),
+                "PH" => '+63', // array("PHILIPPINES", "PH", "PHL", "608"),
+                "PL" => '48', //array("POLAND", "PL", "POL", "616"),
+                "PT" => '+351', //array("PORTUGAL", "PT", "PRT", "620"),
+                "QA" => '+974', //array("QATAR", "QA", "QAT", "634"),
+                "RU" => '+7', //array("RUSSIAN FEDERATION", "RU", "RUS", "643"),
+                "RW" => '+250', //array("RWANDA", "RW", "RWA", "646"),
+                "SA" => '+966', //array("SAUDI ARABIA", "SA", "SAU", "682"),
+                "SN" => '+221', //array("SENEGAL", "SN", "SEN", "686"),
+                "SG" => '+65', //array("SINGAPORE", "SG", "SGP", "702"),
+                "SK" => '+421', //array("SLOVAKIA (Slovak Republic)", "SK", "SVK", "703"),
+                "SI" => '+386', //array("SLOVENIA", "SI", "SVN", "705"),
+                "ZA" => '+27', //array("SOUTH AFRICA", "ZA", "ZAF", "710"),
+                "ES" => '+34', //array("SPAIN", "ES", "ESP", "724"),
+                "LK" => '+94', //array("SRI LANKA", "LK", "LKA", "144"),
+                "SD" => '+249', //array("SUDAN", "SD", "SDN", "736"),
+                "SZ" => '+268', //array("SWAZILAND", "SZ", "SWZ", "748"),
+                "SE" => '+46', //array("SWEDEN", "SE", "SWE", "752"),
+                "CH" => '+41', //array("SWITZERLAND", "CH", "CHE", "756"),
+                "SY" => '+963', //array("SYRIAN ARAB REPUBLIC", "SY", "SYR", "760"),
+                "TZ" => '+255', //array("TANZANIA, UNITED REPUBLIC OF", "TZ", "TZA", "834"),
+                "TH" => '+66', //array("THAILAND", "TH", "THA", "764"),
+                "TG" => '+228', //array("TOGO", "TG", "TGO", "768"),
+                "TO" => '+676', //array("TONGA", "TO", "TON", "776"),
+                "TN" => '+216', //array("TUNISIA", "TN", "TUN", "788"),
+                "TR" => '+90', //array("TURKEY", "TR", "TUR", "792"),
+                "TM" => '+993', //array("TURKMENISTAN", "TM", "TKM", "795"),
+                "UA" => '+380', //array("UKRAINE", "UA", "UKR", "804"),
+                "AE" => '+971', //array("UNITED ARAB EMIRATES", "AE", "ARE", "784"),
+                "GB" => '+44', //array("UNITED KINGDOM", "GB", "GBR", "826"),
+                "US" => '+1' //array("UNITED STATES", "US", "USA", "840"),
 
             );
 
@@ -986,7 +985,6 @@ function woocommerce_paysky_creditcard_wc_init()
 
             return $countries[$code][2];
         }
-
     }
 
     /**
@@ -1016,31 +1014,29 @@ function woocommerce_paysky_creditcard_wc_init()
             ;
              }, 2000);
         </script>';
-
     }
 
 
     function wpb_load_test_server_javascript()
     {
-        ?>
+?>
         <script type="text/javascript">
             loadScript('https://tnpg.moamalat.net:6006/js/lightbox.js');
-
         </script>
 
 
-        <?php
+    <?php
     }
 
     function wpb_load_live_server_javascript()
     {
-        ?>
+    ?>
         <script type="text/javascript">
             loadScript('https://npg.moamalat.net:6006/js/lightbox.js');
         </script>
 
 
-        <?php
+<?php
     }
 
 
@@ -1052,7 +1048,6 @@ function woocommerce_paysky_creditcard_wc_init()
             'result' => 'success',
             'redirect' => $order->get_checkout_payment_url(true)
         );
-
     }
 
 
@@ -1115,8 +1110,6 @@ function woocommerce_paysky_creditcard_wc_init()
 
 
         </script> ";
-
-
     }
 
 
